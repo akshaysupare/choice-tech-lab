@@ -1,0 +1,185 @@
+{
+  "info": {
+    "_postman_id": "choice-tech-project-collection",
+    "name": "Choice Tech Project API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for testing the Choice Tech Project API (Excel import, CRUD, MySQL, Redis)."
+  },
+  "item": [
+    {
+      "name": "Import Excel Data",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "{{path_to_your_excel_file}}",
+              "description": "Upload your Excel file with columns: first_name, last_name, company_name, address, city, county, postal, phone, email, web."
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/import",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["import"]
+        },
+        "description": "Uploads an Excel file and starts asynchronous import."
+      },
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {},
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"message\": \"import started\"\n}",
+          "_postman_previewlanguage": "json"
+        },
+        {
+          "name": "Validation Error",
+          "originalRequest": {},
+          "status": "Bad Request",
+          "code": 400,
+          "body": "{\n  \"error\": \"file is required\"\n}",
+          "_postman_previewlanguage": "json"
+        }
+      ]
+    },
+    {
+      "name": "Get All Records",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/records",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["records"]
+        },
+        "description": "Fetches all imported records. Data is served from Redis cache if available, otherwise from MySQL."
+      },
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {},
+          "status": "OK",
+          "code": 200,
+          "body": "[\n  {\n    \"id\": 1,\n    \"first_name\": \"Aleshia\",\n    \"last_name\": \"Tomkiewicz\",\n    \"company_name\": \"Alan D Rosenburg Cpa Pc\",\n    \"address\": \"14 Taylor St\",\n    \"city\": \"St. Stephens Ward\",\n    \"county\": \"Kent\",\n    \"postal\": \"CT2 7PP\",\n    \"phone\": \"01944-369967\",\n    \"email\": \"atomkiewicz@hotmail.com\",\n    \"web\": \"http://www.alandrosenburgcpapc.co.uk\"\n  }\n]",
+          "_postman_previewlanguage": "json"
+        }
+      ]
+    },
+    {
+      "name": "Update Record",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"first_name\": \"Updated\",\n  \"last_name\": \"Name\",\n  \"company_name\": \"New Company\",\n  \"address\": \"123 New St\",\n  \"city\": \"New City\",\n  \"county\": \"New County\",\n  \"postal\": \"NEW123\",\n  \"phone\": \"01234-567890\",\n  \"email\": \"updated@email.com\",\n  \"web\": \"http://www.newweb.com\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/records/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["records", "1"]
+        },
+        "description": "Update a record by ID. Provide all fields in the body."
+      },
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {},
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"message\": \"record updated\"\n}",
+          "_postman_previewlanguage": "json"
+        },
+        {
+          "name": "Validation Error",
+          "originalRequest": {},
+          "status": "Bad Request",
+          "code": 400,
+          "body": "{\n  \"error\": \"invalid id\"\n}",
+          "_postman_previewlanguage": "json"
+        }
+      ]
+    },
+    {
+      "name": "Delete Record",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/records/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["records", "1"]
+        },
+        "description": "Delete a record by ID."
+      },
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {},
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"message\": \"record deleted\"\n}",
+          "_postman_previewlanguage": "json"
+        },
+        {
+          "name": "Validation Error",
+          "originalRequest": {},
+          "status": "Bad Request",
+          "code": 400,
+          "body": "{\n  \"error\": \"invalid id\"\n}",
+          "_postman_previewlanguage": "json"
+        }
+      ]
+    },
+    {
+      "name": "Get Record By ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/records/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["records", "1"]
+        },
+        "description": "Fetch a single record by its ID."
+      },
+      "response": [
+        {
+          "name": "Success",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"id\": 1,\n  \"first_name\": \"Aleshia\",\n  \"last_name\": \"Tomkiewicz\",\n  \"company_name\": \"Alan D Rosenburg Cpa Pc\",\n  \"address\": \"14 Taylor St\",\n  \"city\": \"St. Stephens Ward\",\n  \"county\": \"Kent\",\n  \"postal\": \"CT2 7PP\",\n  \"phone\": \"01944-369967\",\n  \"email\": \"atomkiewicz@hotmail.com\",\n  \"web\": \"http://www.alandrosenburgcpapc.co.uk\"\n}",
+          "_postman_previewlanguage": "json"
+        },
+        {
+          "name": "Not Found",
+          "status": "Not Found",
+          "code": 404,
+          "body": "{\n  \"error\": \"record not found\"\n}",
+          "_postman_previewlanguage": "json"
+        }
+      ]
+    }
+  ]
+}
