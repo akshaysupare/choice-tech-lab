@@ -1,18 +1,52 @@
 # Choice Tech Project
 
-## Prerequisites
-- Go 1.20+
-- MySQL
-- Redis
+## Prerequisites & Setup
 
-## Setup
-1. Clone the repo.
-2. Configure your MySQL and Redis connection in `config/config.go` or via environment variables.
-3. Run:
-   ```sh
-   go mod tidy
-   go run ./cmd/main.go
-   ```
+1. **Create MySQL Database**
+   - Ensure MySQL is installed and running.
+   - Create a database named `choicetech`:
+     ```sql
+     CREATE DATABASE choicetech;
+     ```
+
+2. **Install Redis (Optional but Recommended)**
+   - Redis is used for caching. If not installed, you can skip, but caching features will not work.
+   - [Redis Quick Start Guide](https://redis.io/docs/getting-started/)
+
+3. **Install Go Modules and Dependencies**
+   - Open a terminal in your project directory and run:
+     ```sh
+     go mod tidy
+     ```
+   - This will download all necessary Go packages, including:
+     - [gin-gonic/gin](https://github.com/gin-gonic/gin) (HTTP framework)
+     - [gorm.io/gorm](https://gorm.io/) (ORM for MySQL)
+     - [gorm.io/driver/mysql](https://gorm.io/docs/connecting_to_the_database.html#MySQL)
+     - [github.com/xuri/excelize/v2](https://github.com/xuri/excelize) (Excel parsing)
+     - [github.com/go-redis/redis/v8](https://github.com/go-redis/redis) (Redis client)
+
+4. **Configure Environment (Optional)**
+   - You can override MySQL/Redis connection settings using environment variables:
+     - `MYSQL_DSN` (default: `root:root@tcp(127.0.0.1:3306)/choicetech`)
+     - `REDIS_ADDR` (default: `localhost:6379`)
+     - `REDIS_PASSWORD` (default: `""`)
+     - `REDIS_DB` (default: `0`)
+
+5. **Run the Project**
+   - Start the server with:
+     ```sh
+     go run .
+     ```
+
+6. **API Usage**
+   - Use Postman or similar tools to interact with the API endpoints.
+   - See the included Postman collection for ready-to-use requests.
+
+---
+
+**Language:** Go  
+**Database:** MySQL  
+**Cache:** Redis (optional, but recommended for full functionality)
 
 ## API Endpoints
 
