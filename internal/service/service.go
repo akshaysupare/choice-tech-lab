@@ -26,14 +26,16 @@ func NewService(mysqlRepo *repository.MySQLRepository, redisRepo *repository.Red
 }
 
 // ImportRecords inserts records into MySQL after clearing the table and resetting the auto-increment ID.
-func (s *Service) SaveRecords(ctx context.Context, records []model.Record) error {
-	// Truncate the table to remove all data and reset auto-increment
-	err := s.MySQLRepo.TruncateTable(ctx)
-	if err != nil {
-		return err
+func (s *Service) SaveRecords(ctx context.Context, records []model.Record, truncate bool) error {
+	if truncate {
+		// Truncate the table to remove all data and reset auto-increment
+		err := s.MySQLRepo.TruncateTable(ctx)
+		if err != nil {
+			return err
+		}
 	}
-	// Insert new records
-	err = s.MySQLRepo.InsertRecordsWithGoroutines(ctx, records)
+	// Insert new records (append if not truncating)
+	err := s.MySQLRepo.InsertRecordsWithGoroutines(ctx, records)
 	if err != nil {
 		return err
 	}
