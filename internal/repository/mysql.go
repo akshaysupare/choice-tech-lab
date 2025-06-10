@@ -2,9 +2,12 @@ package repository
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"sync"
 
-	"choice-tech-project/internal/consts"
 	"choice-tech-project/internal/model"
+	"choice-tech-project/internal/utils"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -31,7 +34,60 @@ func (r *MySQLRepository) CreateTable() error {
 
 // InsertRecords inserts records in batches of 100 for efficiency.
 func (r *MySQLRepository) InsertRecords(ctx context.Context, records []model.Record) error {
-	return r.DB.WithContext(ctx).CreateInBatches(records, consts.BatchSize).Error
+	batchSize, concurrency := utils.DecideBatchSizeAndConcurrency(len(records))
+	log.Printf("Inserting %d records in batches of %d with concurrency %d", len(records), batchSize, concurrency)
+	return r.DB.WithContext(ctx).CreateInBatches(records, batchSize).Error
+}
+// InsertRecords inserts records in batches using multiple goroutines for concurrency.
+func (r *MySQLRepository) InsertRecordsWithGoroutines(ctx context.Context, records []model.Record) error {
+    batchSize, concurrency := utils.DecideBatchSizeAndConcurrency(len(records))
+    log.Printf("Inserting %d records in batches of %d with concurrency %d", len(records), batchSize, concurrency)
+
+    total := len(records)
+    if total == 0 {
+        log.Println("No records to insert.")
+        return nil
+    }
+
+    // Channel to send batches to workers
+    batchChan := make(chan []model.Record)
+    // Channel to collect errors from workers
+    errChan := make(chan error, concurrency)
+    var wg sync.WaitGroup
+
+    // Start worker goroutines
+    for i := 0; i < concurrency; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            for batch := range batchChan {
+                if err := r.DB.WithContext(ctx).CreateInBatches(batch, len(batch)).Error; err != nil {
+                    errChan <- err
+                }
+            }
+        }()
+    }
+
+    // Send batches to workers
+    for i := 0; i < total; i += batchSize {
+        end := i + batchSize
+        if end > total {
+            end = total
+        }
+        batchChan <- records[i:end]
+    }
+    close(batchChan)
+
+    // Wait for all workers to finish
+    wg.Wait()
+    close(errChan)
+
+    // Collect errors if any
+    if len(errChan) > 0 {
+        return fmt.Errorf("insertion encountered %d errors (check logs)", len(errChan))
+    }
+
+    return nil
 }
 
 // GetAllRecords fetches all records from the database.

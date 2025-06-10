@@ -23,16 +23,16 @@ func ParseExcelFile(filePath string) ([]model.Record, error) {
 		return nil, err
 	}
 	defer f.Close()
-
+    // Get the first sheet name and all rows from the sheet
 	sheet := f.GetSheetName(0)
 	rows, err := f.GetRows(sheet)
 	if err != nil {
 		return nil, err
 	}
 	if len(rows) < 2 {
-		return nil, errors.New("no data rows found")
+		return nil, errors.New("no data rows found")// Require at least header + one data row
 	}
-	// Header validation only
+	// Header validation : ensure the first row matches expected headers
 	for i, h := range expectedHeaders {
 		if i >= len(rows[0]) || rows[0][i] != h {
 			return nil, fmt.Errorf("invalid header at column %d: expected '%s', got '%s'", i+1, h, rows[0][i])

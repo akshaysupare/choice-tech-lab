@@ -26,31 +26,38 @@ func NewHandler(svc *service.Service) *Handler {
 
 // ImportExcel handles the Excel file upload, validates header, and imports data.
 func (h *Handler) ImportExcel(c *gin.Context) {
-	file, err := c.FormFile("file")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
-		return
-	}
-	tmpPath := filepath.Join(os.TempDir(), file.Filename)
-	if err := c.SaveUploadedFile(file, tmpPath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save file"})
-		return
-	}
-	defer os.Remove(tmpPath)
+    // 1. Retrieve the uploaded file from the request (expects form-data key "file")
+    file, err := c.FormFile("file")
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "file is required"})
+        return
+    }
 
-	// Only validate the header row in the Excel file
-	records, err := excel.ParseExcelFile(tmpPath)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	// Import synchronously and respond only after completion
-	err = h.Service.ImportRecords(context.Background(), records)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "import failed: " + err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "import completed"})
+    // 2. Save the uploaded file to a temporary location on the server
+    tmpPath := filepath.Join(os.TempDir(), file.Filename)
+    if err := c.SaveUploadedFile(file, tmpPath); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save file"})
+        return
+    }
+    // Ensure the temporary file is deleted after processing
+    defer os.Remove(tmpPath)
+
+    // 3. Parse the Excel file and validate only the header row
+    records, err := excel.ParseExcelFile(tmpPath)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    // 4. Save the parsed records into the database and cache (synchronously)
+	err = h.Service.SaveRecords(context.Background(), records)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "import failed: " + err.Error()})
+        return
+    }
+
+    // 5. Respond to the client after successful import
+    c.JSON(http.StatusOK, gin.H{"message": "import completed"})
 }
 
 // GetRecords returns all imported records, using Redis cache if available.
